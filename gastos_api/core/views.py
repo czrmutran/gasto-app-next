@@ -4,8 +4,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import RegisterSerializer, LoginSerializer, GastoSerializer
-from .models import Gasto
+from django.contrib.auth.models import User
+from .serializers import RegisterSerializer, LoginSerializer, GastoSerializer, PerfilUsuarioSerializer
+from .models import Gasto, PerfilUsuario
 
 class RegisterView(APIView):
     def post(self, request):
@@ -26,6 +27,23 @@ class LoginView(APIView):
                 'access': str(refresh.access_token),
             })
         return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
+
+class RendaMensalView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        perfil = request.user.perfil
+        serializer = PerfilUsuarioSerializer(perfil)
+        return Response(serializer.data)
+
+    def put(self, request):
+        perfil = request.user.perfil
+        serializer = PerfilUsuarioSerializer(perfil, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class GastoView(APIView):
     permission_classes = [IsAuthenticated]
@@ -68,3 +86,17 @@ class GastoDetailView(APIView):
         gasto = self.get_object(pk, request.user)
         gasto.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class GastoDeOutroUsuarioView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, username):
+        try:
+            usuario = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"detail": "Usuário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        gastos = Gasto.objects.filter(usuario=usuario).order_by('-criado_em')
+        serializer = GastoSerializer(gastos, many=True)
+        return Response(serializer.data)
+

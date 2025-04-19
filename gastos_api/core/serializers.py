@@ -1,7 +1,13 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
-from .models import Gasto
+from .models import Gasto, PerfilUsuario
+
+class PerfilUsuarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PerfilUsuario
+        fields = ['renda_mensal']
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -31,5 +37,5 @@ class LoginSerializer(serializers.Serializer):
 class GastoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gasto
-        fields = ['id', 'item', 'valor', 'categoria', 'criado_em']
+        fields = ['id', 'item', 'valor', 'categoria', 'tipo', 'criado_em']
 

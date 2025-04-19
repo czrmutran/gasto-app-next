@@ -16,7 +16,8 @@ export default function Dashboard() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [mesSelecionado, setMesSelecionado] = useState<number>(new Date().getMonth());
-  const [rendaMensal, setRendaMensal] = useState<number>(5000);
+  const [rendaMensal, setRendaMensal] = useState<number | null>(null);
+  const [editandoRenda, setEditandoRenda] = useState<boolean>(false);
   const [editandoId, setEditandoId] = useState<number | null>(null);
 
   const [novoGasto, setNovoGasto] = useState<Gasto>({
@@ -50,8 +51,37 @@ export default function Dashboard() {
     }
   };
 
+  const fetchRendaMensal = async () => {
+    try {
+      const token = localStorage.getItem('access');
+      const res = await axios.get('http://127.0.0.1:8000/api/renda/', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRendaMensal(Number(res.data.renda_mensal));
+    } catch (error) {
+      console.error('Erro ao buscar renda mensal:', error);
+    }
+  };
+
+  const salvarRendaMensal = async () => {
+    try {
+      const token = localStorage.getItem('access');
+      await axios.put(
+        'http://127.0.0.1:8000/api/renda/',
+        { renda_mensal: rendaMensal },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setEditandoRenda(false);
+    } catch (error) {
+      console.error('Erro ao salvar renda mensal:', error);
+    }
+  };
+
   useEffect(() => {
     fetchGastos();
+    fetchRendaMensal();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,23 +90,35 @@ export default function Dashboard() {
       setMessage('Preencha todos os campos.');
       return;
     }
+
     try {
       const token = localStorage.getItem('access');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const payload = {
+        item: novoGasto.item,
+        valor: novoGasto.valor,
+        categoria: novoGasto.categoria,
+        tipo: novoGasto.tipo,
+      };
+
       if (editandoId !== null) {
-        const res = await axios.put(`http://127.0.0.1:8000/api/gastos/${editandoId}/`, novoGasto, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.put(
+          `http://127.0.0.1:8000/api/gastos/${editandoId}/`,
+          payload,
+          { headers }
+        );
         setGastos(gastos.map(g => (g.id === editandoId ? res.data : g)));
         setEditandoId(null);
       } else {
-        const res = await axios.post('http://127.0.0.1:8000/api/gastos/', novoGasto, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.post('http://127.0.0.1:8000/api/gastos/', payload, { headers });
         setGastos([...gastos, res.data]);
       }
+
       setNovoGasto({ item: '', valor: 0, categoria: 'Investimentos', tipo: 'variável' });
       setMessage('');
     } catch (error) {
+      console.error(error);
       setMessage('Erro ao salvar gasto.');
     }
   };
@@ -90,12 +132,18 @@ export default function Dashboard() {
       });
       setGastos(gastos.filter((g) => g.id !== id));
     } catch (error) {
+      console.error(error);
       setMessage('Erro ao deletar gasto.');
     }
   };
 
   const handleEdit = (gasto: Gasto) => {
-    setNovoGasto(gasto);
+    setNovoGasto({
+      item: gasto.item,
+      valor: gasto.valor,
+      categoria: gasto.categoria,
+      tipo: gasto.tipo || 'variável',
+    });
     setEditandoId(gasto.id || null);
   };
 
@@ -120,13 +168,47 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-3 gap-4 text-center mb-8">
         <div className="bg-green-100 p-4 rounded shadow">
-          <h4 className="font-bold text-green-700">Renda Mensal</h4>
-          <p className="text-green-800 font-semibold">R$ {rendaMensal.toFixed(2)}</p>
+          <h4 className="font-bold text-green-700 mb-2">Renda Mensal</h4>
+          {editandoRenda ? (
+            <div className="flex justify-center items-center gap-2">
+              <input
+                type="number"
+                value={rendaMensal ?? ''}
+                onChange={(e) => setRendaMensal(Number(e.target.value))}
+                className="p-1 border rounded text-green-900 w-24"
+                placeholder="Digite a renda"
+              />
+              <button
+                onClick={salvarRendaMensal}
+                className="bg-green-700 text-white px-2 py-1 rounded hover:bg-green-800"
+              >
+                Salvar
+              </button>
+            </div>
+          ) : (
+            <div>
+              {rendaMensal !== null ? (
+                <>
+                  <p className="text-green-800 font-semibold text-lg">R$ {rendaMensal.toFixed(2)}</p>
+                  <button
+                    onClick={() => setEditandoRenda(true)}
+                    className="mt-1 text-sm text-green-700 underline hover:text-green-900"
+                  >
+                    Editar
+                  </button>
+                </>
+              ) : (
+                <p className="text-gray-600 italic text-sm">Carregando renda mensal...</p>
+              )}
+            </div>
+          )}
         </div>
+
         <div className="bg-red-100 p-4 rounded shadow">
           <h4 className="font-bold text-red-700">Gastos Totais</h4>
           <p className="text-red-800 font-semibold">R$ {Number(totalGastos).toFixed(2)}</p>
         </div>
+
         <div className="bg-blue-100 p-4 rounded shadow">
           <h4 className="font-bold text-blue-700">Guardado (Investimentos)</h4>
           <p className="text-blue-800 font-semibold">R$ {Number(totalInvestimentos).toFixed(2)}</p>
