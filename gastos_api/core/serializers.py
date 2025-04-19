@@ -37,5 +37,5 @@ class LoginSerializer(serializers.Serializer):
 class GastoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gasto
-        fields = ['id', 'item', 'valor', 'categoria', 'tipo', 'criado_em']
+        fields = ['id', 'item', 'valor', 'categoria', 'criado_em']
 

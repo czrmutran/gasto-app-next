@@ -10,11 +10,6 @@ class PerfilUsuario(models.Model):
 
 
 class Gasto(models.Model):
-    TIPO_CHOICES = [
-        ('fixo', 'Fixo'),
-        ('variável', 'Variável'),
-    ]
-
     CATEGORIAS = [
         ('Investimentos', 'Investimentos'),
         ('Alimentação', 'Alimentação'),
@@ -29,7 +24,6 @@ class Gasto(models.Model):
     item = models.CharField(max_length=100)
     valor = models.DecimalField(max_digits=10, decimal_places=2)
     categoria = models.CharField(max_length=30, choices=CATEGORIAS)
-    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='variável')
     criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -8,7 +8,6 @@ interface Gasto {
   categoria: string;
   criado_em?: string;
   id?: number;
-  tipo?: 'fixo' | 'variável';
 }
 
 export default function Dashboard() {
@@ -24,7 +23,6 @@ export default function Dashboard() {
     item: '',
     valor: 0,
     categoria: 'Investimentos',
-    tipo: 'variável',
   });
 
   const categorias = [
@@ -99,7 +97,6 @@ export default function Dashboard() {
         item: novoGasto.item,
         valor: novoGasto.valor,
         categoria: novoGasto.categoria,
-        tipo: novoGasto.tipo,
       };
 
       if (editandoId !== null) {
@@ -115,7 +112,7 @@ export default function Dashboard() {
         setGastos([...gastos, res.data]);
       }
 
-      setNovoGasto({ item: '', valor: 0, categoria: 'Investimentos', tipo: 'variável' });
+      setNovoGasto({ item: '', valor: 0, categoria: 'Investimentos' });
       setMessage('');
     } catch (error) {
       console.error(error);
@@ -142,7 +139,6 @@ export default function Dashboard() {
       item: gasto.item,
       valor: gasto.valor,
       categoria: gasto.categoria,
-      tipo: gasto.tipo || 'variável',
     });
     setEditandoId(gasto.id || null);
   };
@@ -163,64 +159,32 @@ export default function Dashboard() {
                                         .reduce((acc, g) => acc + Number(g.valor || 0), 0);
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-4 border rounded-xl shadow-lg bg-white text-gray-800">
-      <h2 className="text-3xl font-bold mb-6 text-center text-gray-900">Painel Financeiro</h2>
+    <div className="max-w-5xl mx-auto mt-10 p-6 bg-white border rounded-2xl shadow-xl text-gray-800">
+      <h2 className="text-4xl font-extrabold mb-10 text-center text-indigo-800">Painel Financeiro</h2>
 
-      <div className="grid grid-cols-3 gap-4 text-center mb-8">
-        <div className="bg-green-100 p-4 rounded shadow">
-          <h4 className="font-bold text-green-700 mb-2">Renda Mensal</h4>
-          {editandoRenda ? (
-            <div className="flex justify-center items-center gap-2">
-              <input
-                type="number"
-                value={rendaMensal ?? ''}
-                onChange={(e) => setRendaMensal(Number(e.target.value))}
-                className="p-1 border rounded text-green-900 w-24"
-                placeholder="Digite a renda"
-              />
-              <button
-                onClick={salvarRendaMensal}
-                className="bg-green-700 text-white px-2 py-1 rounded hover:bg-green-800"
-              >
-                Salvar
-              </button>
-            </div>
-          ) : (
-            <div>
-              {rendaMensal !== null ? (
-                <>
-                  <p className="text-green-800 font-semibold text-lg">R$ {rendaMensal.toFixed(2)}</p>
-                  <button
-                    onClick={() => setEditandoRenda(true)}
-                    className="mt-1 text-sm text-green-700 underline hover:text-green-900"
-                  >
-                    Editar
-                  </button>
-                </>
-              ) : (
-                <p className="text-gray-600 italic text-sm">Carregando renda mensal...</p>
-              )}
-            </div>
-          )}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center mb-12">
+        <div className="bg-emerald-50 border border-emerald-300 p-4 rounded-xl shadow">
+          <h4 className="font-medium text-emerald-700 text-sm">Entrada</h4>
+          <p className="text-emerald-900 text-2xl font-bold">
+            R$ {rendaMensal !== null ? rendaMensal.toFixed(2) : '...'}
+          </p>
         </div>
-
-        <div className="bg-red-100 p-4 rounded shadow">
-          <h4 className="font-bold text-red-700">Gastos Totais</h4>
-          <p className="text-red-800 font-semibold">R$ {Number(totalGastos).toFixed(2)}</p>
+        <div className="bg-rose-50 border border-rose-300 p-4 rounded-xl shadow">
+          <h4 className="font-medium text-rose-700 text-sm">Saída</h4>
+          <p className="text-rose-900 text-2xl font-bold">R$ {totalGastos.toFixed(2)}</p>
         </div>
-
-        <div className="bg-blue-100 p-4 rounded shadow">
-          <h4 className="font-bold text-blue-700">Guardado (Investimentos)</h4>
-          <p className="text-blue-800 font-semibold">R$ {Number(totalInvestimentos).toFixed(2)}</p>
+        <div className="bg-blue-50 border border-blue-300 p-4 rounded-xl shadow">
+          <h4 className="font-medium text-blue-700 text-sm">Guardado (Investimentos)</h4>
+          <p className="text-blue-900 text-2xl font-bold">R$ {totalInvestimentos.toFixed(2)}</p>
         </div>
       </div>
 
-      <div className="mb-6 text-center">
-        <label className="font-semibold text-gray-800">Filtrar por mês: </label>
+      <div className="mb-8 text-center">
+        <label className="font-semibold text-gray-800">Filtrar por mês:</label>
         <select
           value={mesSelecionado}
           onChange={(e) => setMesSelecionado(Number(e.target.value))}
-          className="ml-2 border p-2 rounded text-gray-800"
+          className="ml-2 border p-2 rounded shadow-sm text-gray-800"
         >
           {Array.from({ length: 12 }, (_, i) => (
             <option key={i} value={i}>{new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}</option>
@@ -228,60 +192,58 @@ export default function Dashboard() {
         </select>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-4 gap-2 mb-6">
-        <input type="text" placeholder="Item" className="p-2 border rounded text-gray-800" value={novoGasto.item} onChange={(e) => setNovoGasto({ ...novoGasto, item: e.target.value })} />
-        <input type="number" placeholder="Valor" className="p-2 border rounded text-gray-800" value={novoGasto.valor} onChange={(e) => setNovoGasto({ ...novoGasto, valor: Number(e.target.value) })} />
-        <select className="p-2 border rounded text-gray-800" value={novoGasto.categoria} onChange={(e) => setNovoGasto({ ...novoGasto, categoria: e.target.value })}>
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-10">
+        <input type="text" placeholder="Item" className="p-2 border rounded-lg shadow-sm text-gray-800" value={novoGasto.item} onChange={(e) => setNovoGasto({ ...novoGasto, item: e.target.value })} />
+        <input type="number" placeholder="Valor" className="p-2 border rounded-lg shadow-sm text-gray-800" value={novoGasto.valor} onChange={(e) => setNovoGasto({ ...novoGasto, valor: Number(e.target.value) })} />
+        <select className="p-2 border rounded-lg shadow-sm text-gray-800" value={novoGasto.categoria} onChange={(e) => setNovoGasto({ ...novoGasto, categoria: e.target.value })}>
           {categorias.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
         </select>
-        <select className="p-2 border rounded text-gray-800" value={novoGasto.tipo} onChange={(e) => setNovoGasto({ ...novoGasto, tipo: e.target.value as 'fixo' | 'variável' })}>
-          <option value="fixo">Fixo</option>
-          <option value="variável">Variável</option>
-        </select>
-        <button type="submit" className="col-span-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-          {editandoId !== null ? 'Atualizar gasto' : 'Adicionar gasto'}
+        <button type="submit" className="bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition">
+          {editandoId !== null ? 'Atualizar' : 'Adicionar'}
         </button>
       </form>
 
       {gastosAgrupados.map((grupo) => (
-        <div key={grupo.categoria} className="mb-6">
-          <h4 className="text-xl font-semibold mb-2 text-blue-700">{grupo.categoria}</h4>
-          <table className="w-full table-auto border text-gray-800">
+        <div key={grupo.categoria} className="mb-8">
+          <h4 className="text-xl font-semibold mb-2 text-indigo-700">{grupo.categoria}</h4>
+          <table className="w-full table-auto border text-gray-800 shadow-sm rounded-lg overflow-hidden">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="p-2 border">Item</th>
-                <th className="p-2 border">Valor (R$)</th>
-                <th className="p-2 border">Data</th>
-                <th className="p-2 border">Tipo</th>
-                <th className="p-2 border">Ações</th>
+              <tr className="bg-gray-100 text-center text-sm text-gray-700">
+                <th className="p-2 border font-semibold">Item</th>
+                <th className="p-2 border font-semibold">Valor (R$)</th>
+                <th className="p-2 border font-semibold">Data</th>
+                <th className="p-2 border font-semibold">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {grupo.itens.map((g) => (
-                <tr key={g.id} className="text-center">
+              {grupo.itens.map((g, idx) => (
+                <tr key={g.id} className={`text-center ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                   <td className="p-2 border">{g.item}</td>
-                  <td className="p-2 border">{Number(g.valor || 0).toFixed(2)}</td>
+                  <td className="p-2 border">R$ {Number(g.valor || 0).toFixed(2)}</td>
                   <td className="p-2 border">{g.criado_em ? new Date(g.criado_em).toLocaleDateString() : '-'}</td>
-                  <td className="p-2 border">{g.tipo}</td>
-                  <td className="p-2 border space-x-2">
-                    <button onClick={() => handleEdit(g)} className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">
-                      Editar
-                    </button>
-                    <button onClick={() => handleDelete(g.id)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
-                      Deletar
-                    </button>
+                  <td className="p-2 border">
+                    <div className="flex justify-center gap-2">
+                      <button onClick={() => handleEdit(g)} className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition">
+                        Editar
+                      </button>
+                      <button onClick={() => handleDelete(g.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition">
+                        Deletar
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
-              <tr className="bg-gray-200 font-semibold">
-                <td colSpan={5} className="text-right p-2">Total da categoria: R$ {grupo.totalCategoria.toFixed(2)}</td>
+              <tr className="bg-gray-200 font-semibold text-right">
+                <td colSpan={4} className="p-2">
+                  Total da categoria: R$ {grupo.totalCategoria.toFixed(2)}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       ))}
 
-      {message && <p className="text-center text-sm text-red-600 mt-2">{message}</p>}
+      {message && <p className="text-center text-sm text-red-600 mt-4">{message}</p>}
     </div>
   );
 }
